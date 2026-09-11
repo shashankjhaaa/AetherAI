@@ -77,3 +77,18 @@ AetherAI/
     ├── pom.xml
     ├── mvnw
     └── mvnw.cmd
+
+
+    ## Deployment
+
+### Frontend
+
+The AetherAI frontend is deployed on Netlify.
+
+### Backend
+
+The Spring Boot backend currently runs locally on:
+
+`http://localhost:8080`
+
+The frontend communicates with the backend through the configured API endpoint.

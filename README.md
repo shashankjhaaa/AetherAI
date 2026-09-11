@@ -77,9 +77,7 @@ AetherAI/
     ├── pom.xml
     ├── mvnw
     └── mvnw.cmd
-
-
-    ## Deployment
+### Deployment
 
 ### Frontend
 

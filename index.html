@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth transition-colors duration-300">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AetherAI — Customer Experience Built Around Outcomes</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/config.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+</head>
+<body class="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans antialiased overflow-x-hidden transition-colors duration-300">
+
+  <!-- ============================================== -->
+  <!-- SCROLL PROGRESS BAR -->
+  <!-- ============================================== -->
+  <div id="scroll-progress" class="fixed top-0 left-0 h-1 bg-gradient-to-r from-brand-primary to-brand-accent z-[500] transition-all duration-75" style="width: 0%;"></div>
+
+  <!-- ============================================== -->
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <!-- ============================================== -->
+  <div id="toast-container" class="fixed bottom-6 left-6 z-[150] flex flex-col space-y-3 pointer-events-none"></div>
+
+  <!-- ============================================== -->
+  <!-- SCROLL TO TOP BUTTON -->
+  <!-- ============================================== -->
+  <button id="scroll-top-btn" onclick="scrollToTop()" class="fixed bottom-24 right-4 sm:bottom-28 sm:right-6 w-10 h-10 sm:w-12 sm:h-12 bg-slate-800 dark:bg-slate-700 text-white rounded-full shadow-lg flex items-center justify-center text-lg z-[90] opacity-0 translate-y-10 transition-all duration-500 hover:bg-brand-primary cursor-pointer border border-slate-600">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
+
+  <!-- ============================================== -->
+  <!-- LOGIN/SIGNUP MODAL (OVERLAY) -->
+  <!-- ============================================== -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] hidden items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-[0_0_50px_rgba(14,165,233,0.3)] overflow-hidden relative border border-white/20 dark:border-slate-700 transition-colors">
+      <button type="button" onclick="closeLoginModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition cursor-pointer z-30">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+      <div class="p-10 relative">
+        <div class="absolute top-8 left-8 w-20 h-20 bg-brand-primary blur-3xl opacity-30"></div>
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center text-white font-bold text-2xl mb-6 shadow-lg relative z-10">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <h3 id="auth-title" class="text-2xl font-black text-slate-900 dark:text-white mb-2">Welcome Back</h3>
+        <p id="auth-subtitle" class="text-sm text-slate-500 dark:text-slate-400 mb-8">Sign in to manage your AI agents.</p>
+        
+        <!-- Auth Form (Login / Signup Toggle) -->
+        <form onsubmit="handleAuth(event)" id="auth-form" class="space-y-5 relative z-10">
+          
+          <!-- Username Field (Only for Signup, hidden by default) -->
+          <div id="username-container" class="hidden">
+            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Unique Username</label>
+            <input type="text" id="username-input" placeholder="e.g. aether_admin" class="w-full bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 focus:border-brand-primary rounded-xl px-4 py-3 text-sm outline-none dark:text-white transition-colors">
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+            <input type="email" id="email-input" placeholder="admin@aetherai.com" class="w-full bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 focus:border-brand-primary rounded-xl px-4 py-3 text-sm outline-none dark:text-white transition-colors" required>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+            <input type="password" id="password-input" placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 focus:border-brand-primary rounded-xl px-4 py-3 text-sm outline-none dark:text-white transition-colors" required>
+            <!-- Password Strength Meter -->
+            <div class="mt-2 flex space-x-1">
+              <div id="str-1" class="h-1.5 w-full bg-gray-200 dark:bg-slate-700 rounded transition-colors"></div>
+              <div id="str-2" class="h-1.5 w-full bg-gray-200 dark:bg-slate-700 rounded transition-colors"></div>
+              <div id="str-3" class="h-1.5 w-full bg-gray-200 dark:bg-slate-700 rounded transition-colors"></div>
+            </div>
+            <p id="str-msg" class="text-[10px] font-bold mt-1 empty:hidden"></p>
+          </div>
+          
+          <p id="login-error" class="text-red-500 text-xs font-bold hidden"></p>
+          
+          <button type="submit" id="submit-btn" class="w-full btn-pop bg-brand-dark dark:bg-brand-primary hover:bg-slate-800 text-white font-bold px-6 py-3.5 rounded-xl transition-all shadow-lg mt-2">
+            Sign In to Dashboard
+          </button>
+
+          <p class="text-center text-sm text-slate-500 mt-4 cursor-pointer hover:text-brand-primary font-bold transition-colors" onclick="toggleAuthMode()" id="toggle-auth-text">
+            Don't have an account? Sign Up
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- EXIT INTENT MODAL (OVERLAY) -->
+  <!-- ============================================== -->
+  <div id="exit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[300] hidden items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-[0_0_50px_rgba(14,165,233,0.4)] overflow-hidden relative border border-white/20 dark:border-slate-700 p-10 text-center transition-colors">
+      <button type="button" onclick="closeExitModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 flex items-center justify-center transition cursor-pointer z-30"><i class="fa-solid fa-xmark"></i></button>
+      <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 mx-auto flex items-center justify-center text-3xl mb-4 shadow-inner"><i class="fa-solid fa-hand-paper"></i></div>
+      <h3 class="text-3xl font-black text-slate-900 dark:text-white mb-2">Wait! Don't leave yet.</h3>
+      <p class="text-slate-500 dark:text-slate-400 mb-8 font-medium">Get a FREE personalized AI Audit for your customer support flow before you go. No strings attached.</p>
+      <button onclick="closeExitModal(); openDemoModal();" class="w-full btn-pop bg-brand-primary hover:bg-cyan-600 text-white font-bold px-6 py-4 rounded-xl transition-all shadow-lg mb-4">Claim My Free Audit</button>
+      <button onclick="closeExitModal()" class="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold transition">No thanks, I'll pass</button>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- SCHEDULE DEMO MODAL (OVERLAY) -->
+  <!-- ============================================== -->
+  <div id="demo-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] hidden items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-[0_0_50px_rgba(14,165,233,0.3)] overflow-hidden relative border border-white/20 dark:border-slate-700 transition-colors">
+      <button type="button" onclick="closeDemoModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 flex items-center justify-center transition cursor-pointer z-30">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+      <div class="p-10 relative" id="demo-form-container">
+        <div class="absolute top-8 right-8 w-20 h-20 bg-brand-accent blur-3xl opacity-30"></div>
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center text-white font-bold text-2xl mb-6 shadow-lg relative z-10">
+          <i class="fa-solid fa-calendar-check"></i>
+        </div>
+        <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Book a Demo</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-8">Pick a time to see Aether AI in action.</p>
+        
+        <form onsubmit="handleDemoSubmit(event)" class="space-y-4 relative z-10">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Full Name</label>
+            <input type="text" placeholder="John Doe" class="w-full bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 focus:border-brand-primary rounded-xl px-4 py-3 text-sm outline-none dark:text-white transition-colors" required>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Company Email</label>
+            <input type="email" placeholder="john@company.com" class="w-full bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 focus:border-brand-primary rounded-xl px-4 py-3 text-sm outline-none dark:text-white transition-colors" required>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Date</label>
+              <input type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 focus:border-brand-primary rounded-xl px-4 py-3 text-sm outline-none dark:text-white transition-colors" required>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Time</label>
+              <input type="time" class="w-full bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 focus:border-brand-primary rounded-xl px-4 py-3 text-sm outline-none dark:text-white transition-colors" required>
+            </div>
+          </div>
+          <button type="submit" class="w-full btn-pop bg-brand-primary hover:bg-cyan-600 text-white font-bold px-6 py-3.5 rounded-xl transition-all shadow-lg mt-4">
+            Confirm Booking
+          </button>
+        </form>
+      </div>
+
+      <!-- Success State -->
+      <div class="p-10 relative hidden flex-col items-center text-center animate-fade-in" id="demo-success-container">
+        <div class="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 text-green-500 dark:text-green-400 flex items-center justify-center text-4xl mb-6 shadow-inner">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Demo Scheduled!</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">We've sent a calendar invite to your email. Talk to you soon!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MAIN LANDING PAGE VIEW -->
+  <!-- ============================================== -->
+  <div id="landing-view" class="block transition-all duration-500">
+    
+    <!-- NAVIGATION -->
+    <nav class="fixed w-full top-0 z-50 bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800 shadow-sm transition-all duration-300">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        
+        <a href="javascript:void(0)" onclick="window.location.reload();" class="flex items-center space-x-2 cursor-pointer" data-aos="fade-down" data-aos-duration="800">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-cyan-500/40">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <span class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Aether</span>
+        </a>
+
+        <div class="hidden lg:flex items-center space-x-8 text-sm font-semibold text-slate-600 dark:text-slate-300" data-aos="fade-down" data-aos-duration="800" data-aos-delay="100">
+          <a href="#platform" class="hover:text-brand-primary transition-colors flex items-center">Platform</a>
+          <a href="#features" class="hover:text-brand-primary transition-colors flex items-center">Features</a>
+          <a href="#pricing" class="hover:text-brand-primary transition-colors">Pricing</a>
+          <a href="#faq" class="hover:text-brand-primary transition-colors">FAQ</a>
+        </div>
+
+        <div class="flex items-center space-x-4" data-aos="fade-down" data-aos-duration="800" data-aos-delay="200">
+          <button onclick="toggleTheme()" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-brand-primary transition">
+            <i id="theme-icon" class="fa-solid fa-moon"></i>
+          </button>
+
+          <button onclick="openLoginModal()" class="hidden sm:flex btn-pop bg-slate-900 dark:bg-white dark:text-slate-900 hover:bg-black text-white font-bold text-sm px-6 py-2.5 rounded-full transition-all duration-300 shadow-md">
+            <i class="fa-solid fa-chart-pie mr-2 text-cyan-400 dark:text-brand-primary"></i>Dashboard Login
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section id="platform" class="relative pt-40 pb-32 bg-brand-lightbg dark:bg-slate-950 text-center px-4 overflow-hidden transition-colors">
+      <div class="absolute inset-0 bg-grid-pattern opacity-[0.15] dark:opacity-[0.05]"></div>
+      
+      <div class="absolute top-[0%] left-[-10%] w-[600px] h-[600px] rounded-full bg-cyan-400/20 blur-[120px] pointer-events-none animate-glow-pulse"></div>
+      <div class="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none animate-glow-pulse" style="animation-delay: 1s;"></div>
+
+      <div class="max-w-5xl mx-auto relative z-10">
+        <div class="inline-block px-4 py-1.5 rounded-full border border-cyan-200 dark:border-cyan-900 bg-cyan-50 dark:bg-cyan-900/30 text-brand-primary font-bold text-xs mb-8 tracking-wider uppercase shadow-sm" data-aos="fade-down">
+          ✨ Introducing Gen-AI Workflows
+        </div>
+        
+        <h1 class="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-6 transition-colors" data-aos="zoom-in-up" data-aos-duration="1000">
+          Customer experience <br /> built around 
+          <span id="typewriter" class="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-blue-700 relative inline-block">outcomes</span><span class="text-brand-primary animate-pulse relative -left-1">|</span>
+        </h1>
+        
+        <p class="text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium px-4" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="200">
+          AI Agents for customer support and sales that make every conversation feel like your brand actually cares.
+        </p>
+        
+        <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 px-4" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="400">
+          <button onclick="openDemoModal()" class="w-full sm:w-auto btn-pop bg-gradient-to-r from-brand-primary to-brand-accent hover:from-cyan-500 hover:to-blue-600 text-white font-bold px-8 py-4 rounded-full transition-all shadow-[0_10px_25px_rgba(14,165,233,0.3)] text-center">
+            Schedule a Demo
+          </button>
+          <button onclick="toggleChat()" class="w-full sm:w-auto btn-pop bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold px-8 py-4 rounded-full transition-all shadow-md text-center border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+            <i class="fa-solid fa-robot mr-2 text-brand-primary"></i> Try Guided AI Agent
+          </button>
+        </div>
+
+        <div class="mt-20 relative max-w-4xl mx-auto group perspective-[2000px]" data-aos="fade-up" data-aos-delay="600">
+          <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-brand-lightbg dark:from-slate-950 to-transparent z-20 pointer-events-none transition-colors"></div>
+          
+          <div class="rounded-2xl border border-white/80 dark:border-slate-700 bg-white/70 dark:bg-slate-800/80 backdrop-blur-2xl p-6 shadow-[0_30px_60px_-15px_rgba(14,165,233,0.3)] text-left [transform:rotateX(8deg)_scale(0.97)] group-hover:[transform:rotateX(0deg)_scale(1)] transition-all duration-700 ease-out">
+            <div class="flex items-center space-x-2 mb-6 border-b border-gray-100 dark:border-slate-700 pb-4">
+              <div class="w-3 h-3 rounded-full bg-red-400"></div>
+              <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+              <div class="w-3 h-3 rounded-full bg-green-400"></div>
+              <span class="ml-4 text-xs font-bold text-slate-400 font-mono">app.aetherai.com/dashboard</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div class="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-slate-700 dark:to-slate-800 border border-cyan-100 dark:border-slate-600 p-4 rounded-xl transition-colors">
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400">Active Conversations</p>
+                <p class="text-2xl font-black text-slate-800 dark:text-white mt-1">1,248</p>
+                <span class="text-[10px] text-green-600 dark:text-green-400 font-bold bg-green-100 dark:bg-green-900/40 px-1.5 py-0.5 rounded">+12% this week</span>
+              </div>
+              <div class="bg-slate-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-700 p-4 rounded-xl transition-colors">
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400">AI Resolution Rate</p>
+                <p class="text-2xl font-black text-slate-800 dark:text-white mt-1">87.4%</p>
+                <span class="text-[10px] text-brand-primary font-bold bg-cyan-100 dark:bg-cyan-900/40 px-1.5 py-0.5 rounded">Optimal</span>
+              </div>
+              <div class="bg-slate-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-700 p-4 rounded-xl transition-colors">
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400">Money Saved</p>
+                <p class="text-2xl font-black text-slate-800 dark:text-white mt-1">$4,250</p>
+                <span class="text-[10px] text-purple-600 dark:text-purple-400 font-bold bg-purple-100 dark:bg-purple-900/40 px-1.5 py-0.5 rounded">Est. ROI</span>
+              </div>
+            </div>
+            <div class="h-16 bg-slate-900 rounded-xl flex items-center px-6 text-white text-xs font-mono justify-between">
+              <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-green-400 animate-pulse mr-2"></span> Agent status: Live & Listening</span>
+              <span class="text-brand-primary">v2.4 active</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- LOGO CLOUD -->
+    <section class="py-10 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 transition-colors overflow-hidden">
+      <div class="max-w-7xl mx-auto px-6 text-center">
+        <p class="text-xs font-bold text-slate-400 mb-8 uppercase tracking-widest" data-aos="fade-in">
+          Chosen by 800+ global brands across industries
+        </p>
+        <div class="flex flex-wrap justify-center items-center gap-10 md:gap-16 opacity-50 dark:opacity-70 hover:opacity-100 transition-opacity duration-500" data-aos="fade-up">
+          <a href="https://www.qf.org.qa/" target="_blank" rel="noopener noreferrer" class="text-2xl font-bold text-slate-800 dark:text-white flex items-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
+            <i class="fa-solid fa-tree mr-2 text-green-600"></i> Qatar Foundation
+          </a>
+          <a href="https://www.unitel.ao/" target="_blank" rel="noopener noreferrer" class="text-2xl font-black text-slate-800 dark:text-white flex items-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
+            <i class="fa-solid fa-circle-notch mr-2 text-orange-500"></i> UNITEL
+          </a>
+          <a href="https://www.vodafone.com/" target="_blank" rel="noopener noreferrer" class="text-2xl font-bold text-slate-800 dark:text-white flex items-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
+            <i class="fa-brands fa-vimeo mr-2 text-red-600"></i> vodafone
+          </a>
+          <a href="https://stripe.com/" target="_blank" rel="noopener noreferrer" class="text-2xl font-bold text-slate-800 dark:text-white flex items-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
+            <i class="fa-brands fa-stripe mr-2 text-indigo-500"></i> Stripe
+          </a>
+          <a href="https://www.spotify.com/" target="_blank" rel="noopener noreferrer" class="text-2xl font-bold text-slate-800 dark:text-white flex items-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
+            <i class="fa-brands fa-spotify mr-2 text-green-500"></i> Spotify
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROBLEM VS SOLUTION -->
+    <section class="py-32 bg-brand-dark text-white px-4 relative overflow-hidden">
+      <div class="absolute inset-0 bg-grid-pattern opacity-[0.05]"></div>
+      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-brand-primary/10 blur-[150px] pointer-events-none"></div>
+      
+      <div class="max-w-6xl mx-auto text-center relative z-10">
+        <h2 class="text-4xl md:text-5xl font-extrabold mb-6" data-aos="fade-up">For years, we measured the wrong thing</h2>
+        <p class="text-lg text-slate-300 max-w-3xl mx-auto mb-20 leading-relaxed font-medium" data-aos="fade-up" data-aos-delay="100">
+          How many support tickets never reached a human? The number looked good. But your customers were not getting happier. We rebuilt our AI around the question that actually matters: <span class="text-brand-primary font-bold bg-brand-primary/10 px-2 py-1 rounded">Did they get what they came for?</span>
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto text-left">
+          <div class="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-8 md:p-10 backdrop-blur-md hover:border-brand-primary/50 transition-all duration-500" data-aos="fade-right" data-aos-delay="200">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 flex items-center"><i class="fa-solid fa-chart-line mr-2 text-slate-500"></i> What the metrics showed</h3>
+            <ul class="space-y-8">
+              <li class="flex items-start space-x-5 group">
+                <div class="w-12 h-12 rounded-2xl bg-slate-700/80 flex items-center justify-center text-2xl group-hover:bg-slate-600 transition-colors shadow-inner flex-shrink-0">📉</div>
+                <div>
+                  <p class="font-bold text-white text-lg">60% deflection rate</p>
+                  <p class="text-sm text-slate-400 mt-1">Tickets kept away from humans</p>
+                </div>
+              </li>
+              <li class="flex items-start space-x-5 group">
+                <div class="w-12 h-12 rounded-2xl bg-slate-700/80 flex items-center justify-center text-2xl group-hover:bg-slate-600 transition-colors shadow-inner flex-shrink-0">⏱️</div>
+                <div>
+                  <p class="font-bold text-white text-lg">Fast response time</p>
+                  <p class="text-sm text-slate-400 mt-1">First reply within seconds</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-3xl p-8 md:p-10 shadow-2xl relative transform md:-translate-y-8 hover:-translate-y-10 transition-all duration-500" data-aos="fade-left" data-aos-delay="400">
+            <div class="absolute -top-4 -right-4 w-10 h-10 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-red-500/40 animate-pulse">!</div>
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 border-b border-gray-100 dark:border-slate-700 pb-4 flex items-center transition-colors"><i class="fa-solid fa-face-frown text-red-400 mr-2"></i> What the customer experienced</h3>
+            <ul class="space-y-8">
+              <li class="flex items-start space-x-5 group">
+                <div class="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-900/30 text-red-500 flex items-center justify-center text-xl group-hover:bg-red-100 dark:group-hover:bg-red-900/50 transition-colors flex-shrink-0"><i class="fa-solid fa-rotate-right"></i></div>
+                <div>
+                  <p class="font-bold text-lg">Explaining problem twice</p>
+                  <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Ticket resolved. Problem did not.</p>
+                </div>
+              </li>
+              <li class="flex items-start space-x-5 group">
+                <div class="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-900/30 text-orange-500 flex items-center justify-center text-xl group-hover:bg-orange-100 dark:group-hover:bg-orange-900/50 transition-colors flex-shrink-0"><i class="fa-solid fa-shuffle"></i></div>
+                <div>
+                  <p class="font-bold text-lg">Three channels. Fresh starts.</p>
+                  <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Giving up before getting help.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TWO FRONT DOORS FEATURE SECTION -->
+    <section id="features" class="py-32 bg-brand-lightbg dark:bg-slate-950 px-4 transition-colors overflow-hidden">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-24" data-aos="fade-up">
+          <h2 class="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight transition-colors">Two front doors. <br/> One memory behind them.</h2>
+          <p class="mt-6 text-slate-500 dark:text-slate-400 text-lg font-medium">No matter which door your customers walk through, they leave with what they need.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+          <div data-aos="fade-right">
+            <h3 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-6 leading-tight transition-colors">Support that feels like someone remembered</h3>
+            <p class="text-slate-600 dark:text-slate-400 text-lg mb-8 leading-relaxed font-medium transition-colors">
+              Your customers have history with your brand. Aether keeps it. AI Agents that handle high-volume support with full context across every channel.
+            </p>
+            <button onclick="openDemoModal()" class="btn-pop inline-block bg-brand-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-cyan-600 transition shadow-md shadow-cyan-500/20">
+              See how it works <i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
+            </button>
+          </div>
+          
+          <div class="relative h-80 rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-2xl flex items-center justify-center p-8 animate-float transition-colors" data-aos="fade-left" data-aos-delay="200">
+             <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-slate-700 dark:to-slate-800 rounded-3xl opacity-50 transition-colors"></div>
+            
+            <div class="relative flex space-x-6 z-10">
+              <a href="javascript:void(0)" onclick="toggleChat()" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-slate-900 shadow-xl border-4 border-brand-primary flex items-center justify-center text-2xl sm:text-3xl text-brand-primary hover:scale-110 transition-transform cursor-pointer flex-shrink-0" title="Open Live Chat">
+                <i class="fa-solid fa-globe"></i>
+              </a>
+
+              <a href="https://wa.me/919310064714?text=Hi%20Aether%20AI%20Team!%20I%20was%20browsing%20your%20website%20and%20would%20love%20to%20know%20more%20about%20how%20your%20AI%20agents%20can%20help%20my%20business." target="_blank" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-slate-900 shadow-xl border-4 border-green-500 flex items-center justify-center text-2xl sm:text-3xl text-green-500 hover:scale-110 transition-transform cursor-pointer flex-shrink-0" title="Message on WhatsApp">
+                <i class="fa-brands fa-whatsapp"></i>
+              </a>
+
+              <a href="mailto:sales@aetherai.com?subject=Inquiry%20about%20Aether%20AI%20Solutions" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-slate-900 shadow-xl border-4 border-blue-400 flex items-center justify-center text-2xl sm:text-3xl text-blue-500 hover:scale-110 transition-transform cursor-pointer flex-shrink-0" title="Send Email">
+                <i class="fa-regular fa-envelope"></i>
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HORIZONTAL SCROLLING TESTIMONIALS (WITH ARROWS) -->
+    <section class="py-24 bg-white dark:bg-slate-900 border-y border-gray-100 dark:border-slate-800 overflow-hidden transition-colors relative group">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-16" data-aos="fade-up">
+          <div>
+            <h2 class="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight transition-colors">Real results, <br/> real stories.</h2>
+          </div>
+          
+          <div class="mt-6 md:mt-0 flex items-center space-x-4">
+            <button id="slide-left" class="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-all shadow-sm">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button id="slide-right" class="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-all shadow-sm">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex overflow-x-auto space-x-6 pb-12 pt-4 snap-x hide-scrollbar cursor-grab active:cursor-grabbing scroll-smooth" id="slider">
+          
+          <div class="min-w-[300px] sm:min-w-[350px] md:min-w-[450px] bg-slate-50 dark:bg-slate-800 p-8 sm:p-10 rounded-3xl border border-gray-100 dark:border-slate-700 flex flex-col justify-between snap-start hover:shadow-lg transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+            <div>
+              <div class="text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-blue-500 text-6xl font-serif leading-[0.5] mb-6">“</div>
+              <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 leading-tight transition-colors">"Cutting down on staff needing to email back."</h3>
+              <p class="text-slate-500 dark:text-slate-300 text-sm leading-relaxed mb-8 font-medium">We've had more than 5k interactions with them from individuals on the website. This provides another avenue of access to our team.</p>
+            </div>
+            <div class="mt-auto pt-6 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between transition-colors">
+              <div>
+                <p class="font-bold text-slate-900 dark:text-white text-sm">Levi Eastwood</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Marketing Director</p>
+              </div>
+              <div class="w-12 h-12 bg-white dark:bg-slate-700 rounded-xl flex items-center justify-center font-bold text-xs text-slate-400 dark:text-slate-300 border border-gray-200 dark:border-slate-600 shadow-sm transition-colors">UCI</div>
+            </div>
+          </div>
+
+          <div class="min-w-[300px] sm:min-w-[350px] md:min-w-[450px] bg-slate-50 dark:bg-slate-800 p-8 sm:p-10 rounded-3xl border border-gray-100 dark:border-slate-700 flex flex-col justify-between snap-start hover:shadow-lg transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+            <div>
+              <div class="text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-blue-500 text-6xl font-serif leading-[0.5] mb-6">“</div>
+              <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 leading-tight transition-colors">"I like the product. Fast & reliable."</h3>
+              <p class="text-slate-500 dark:text-slate-300 text-sm leading-relaxed mb-8 font-medium">Takes those boring forms and allows you to make the collecting of customer information enjoyable for the user. It has a lot of value.</p>
+            </div>
+            <div class="mt-auto pt-6 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between transition-colors">
+              <div>
+                <p class="font-bold text-slate-900 dark:text-white text-sm">Pierre Rattini</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Director of Marketing</p>
+              </div>
+              <div class="w-12 h-12 bg-white dark:bg-slate-700 rounded-xl flex items-center justify-center font-bold text-xs text-slate-400 dark:text-slate-300 border border-gray-200 dark:border-slate-600 shadow-sm transition-colors">PR</div>
+            </div>
+          </div>
+
+          <div class="min-w-[300px] sm:min-w-[350px] md:min-w-[450px] bg-slate-50 dark:bg-slate-800 p-8 sm:p-10 rounded-3xl border border-gray-100 dark:border-slate-700 flex flex-col justify-between snap-start hover:shadow-lg transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
+            <div>
+              <div class="text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-blue-500 text-6xl font-serif leading-[0.5] mb-6">“</div>
+              <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 leading-tight transition-colors">"Easy for cooperation."</h3>
+              <p class="text-slate-500 dark:text-slate-300 text-sm leading-relaxed mb-8 font-medium">They took the time to thoroughly assess our requirements, offering valuable insights and recommendations that we hadn't even considered before deploying the bot.</p>
+            </div>
+            <div class="mt-auto pt-6 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between transition-colors">
+              <div>
+                <p class="font-bold text-slate-900 dark:text-white text-sm">Milica Petrovic</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Project Associate</p>
+              </div>
+              <div class="text-xl font-black text-brand-primary">HB</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING CALCULATOR SECTION -->
+    <section id="pricing" class="py-24 px-4 bg-slate-50 dark:bg-slate-950 border-y border-gray-100 dark:border-slate-800 transition-colors overflow-hidden">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-10" data-aos="fade-up">
+          <h2 class="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight transition-colors">Transparent Pricing</h2>
+          <p class="mt-4 text-slate-500 dark:text-slate-400">Drag the slider to see your estimated monthly cost based on volume.</p>
+        </div>
+
+        <div class="flex items-center justify-center space-x-4 mb-10" data-aos="fade-up" data-aos-delay="100">
+          <span class="text-sm font-bold text-slate-500 dark:text-slate-400" id="label-monthly">Monthly</span>
+          <button onclick="toggleBilling()" type="button" class="w-14 h-7 rounded-full bg-slate-300 dark:bg-slate-700 relative transition-colors focus:outline-none" id="billing-toggle">
+            <div class="w-5 h-5 rounded-full bg-white shadow absolute top-1 left-1 transition-transform" id="billing-dot"></div>
+          </button>
+          <span class="text-sm font-bold text-slate-900 dark:text-white flex items-center" id="label-annually">Annually <span class="text-[10px] bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full ml-1 font-extrabold uppercase">Save 20%</span></span>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-3xl p-6 sm:p-8 md:p-12 shadow-sm grid md:grid-cols-2 gap-8 md:gap-12 transition-colors" data-aos="fade-up" data-aos-delay="200">
+          <div class="space-y-8">
+            <div>
+              <div class="flex justify-between text-sm font-bold text-slate-700 dark:text-slate-300 mb-4">
+                <label>Monthly Conversations</label>
+                <span id="chats-val" class="text-brand-primary font-mono bg-cyan-50 dark:bg-cyan-900/30 px-2 py-1 rounded border border-cyan-100 dark:border-cyan-800">10,000</span>
+              </div>
+              <input type="range" id="chats-slider" min="1000" max="100000" step="1000" value="10000" oninput="calculatePricing()" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none accent-brand-primary cursor-pointer transition-colors" />
+            </div>
+          </div>
+
+          <div class="bg-brand-dark rounded-2xl p-6 sm:p-8 flex flex-col justify-center text-center text-white shadow-xl relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(14,165,233,0.3)] transition-all">
+            <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+            <div class="relative z-10">
+              <span class="text-slate-400 text-sm font-bold tracking-widest uppercase">Estimated Total</span>
+              <div class="text-5xl sm:text-6xl font-black text-white my-4 font-mono group-hover:text-cyan-400 transition-colors">
+                $<span id="price-total">249</span>
+              </div>
+              <p class="text-sm text-slate-400 mb-6 border-b border-slate-700 pb-6">Per Month</p>
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-brand-primary font-bold bg-brand-primary/10 p-2 rounded border border-brand-primary/20 gap-1 sm:gap-0">
+                <span>Savings vs Human Support:</span>
+                <span id="projected-savings">94%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE FAQ SECTION -->
+    <section id="faq" class="py-24 bg-white dark:bg-slate-900 px-4 transition-colors">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-16" data-aos="fade-up">
+          <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight transition-colors">Frequently Asked Questions</h2>
+          <p class="mt-4 text-slate-500 dark:text-slate-400">Everything you need to know about setting up Aether AI.</p>
+        </div>
+
+        <div class="space-y-4" data-aos="fade-up" data-aos-delay="200">
+          <div class="border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden transition-colors">
+            <button onclick="toggleFaq(this)" class="w-full p-6 text-left font-bold text-slate-800 dark:text-white flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <span>How long does it take to integrate Aether AI?</span>
+              <i class="fa-solid fa-chevron-down text-sm text-slate-400 transition-transform"></i>
+            </button>
+            <div class="hidden px-6 pb-6 text-sm text-slate-500 dark:text-slate-300 leading-relaxed transition-colors">
+              Integration typically takes less than 15 minutes. You just need to paste our secure widget script or connect via our REST APIs to your support portal.
+            </div>
+          </div>
+
+          <div class="border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden transition-colors">
+            <button onclick="toggleFaq(this)" class="w-full p-6 text-left font-bold text-slate-800 dark:text-white flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <span>Can the AI agent handle complex custom database queries?</span>
+              <i class="fa-solid fa-chevron-down text-sm text-slate-400 transition-transform"></i>
+            </button>
+            <div class="hidden px-6 pb-6 text-sm text-slate-500 dark:text-slate-300 leading-relaxed transition-colors">
+              Yes! Aether AI features secure connector protocols that allow agents to look up user data, issue refunds, or update internal records safely with enterprise compliance.
+            </div>
+          </div>
+
+          <div class="border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden transition-colors">
+            <button onclick="toggleFaq(this)" class="w-full p-6 text-left font-bold text-slate-800 dark:text-white flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <span>What happens if the AI cannot solve a user problem?</span>
+              <i class="fa-solid fa-chevron-down text-sm text-slate-400 transition-transform"></i>
+            </button>
+            <div class="hidden px-6 pb-6 text-sm text-slate-500 dark:text-slate-300 leading-relaxed transition-colors">
+              The agent seamlessly routes the conversation to a human support agent along with the full chat transcript and context so the customer never has to repeat themselves.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FULL FOOTER SECTION -->
+    <footer id="contact" class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white pt-24 pb-12 border-t border-gray-200 dark:border-slate-800 transition-colors overflow-hidden">
+      <div class="max-w-7xl mx-auto px-6">
+        
+        <div class="bg-gradient-to-br from-brand-dark to-slate-900 rounded-3xl p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between mb-20 shadow-2xl relative overflow-hidden" data-aos="zoom-in">
+          <div class="absolute -right-10 -top-10 w-40 h-40 bg-brand-primary opacity-20 rounded-full blur-3xl"></div>
+          <div class="relative z-10 text-center md:text-left">
+            <h3 class="text-2xl sm:text-3xl font-extrabold mb-2 text-white">Ready to automate your support?</h3>
+            <p class="text-slate-400 text-base sm:text-lg">Connect with an AI architect to discuss your custom workflow.</p>
+          </div>
+          <div class="mt-8 md:mt-0 relative z-10 w-full md:w-auto">
+             <button onclick="openDemoModal()" class="w-full md:w-auto btn-pop bg-white text-slate-900 font-bold px-8 py-4 rounded-full transition shadow-lg inline-block hover:bg-slate-50">
+              Schedule Demo
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-10 mb-16 border-b border-gray-200 dark:border-slate-800 pb-16 transition-colors">
+          <div class="col-span-2">
+            <a href="javascript:void(0)" onclick="window.location.reload();" class="flex items-center space-x-2 mb-6 cursor-pointer">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center text-white font-bold text-xl">
+                <i class="fa-solid fa-layer-group"></i>
+              </div>
+              <span class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Aether</span>
+            </a>
+            <p class="text-xs text-slate-400 font-bold tracking-widest mb-2 uppercase">Get in touch.</p>
+            <a href="mailto:sales@aetherai.com" class="text-brand-primary hover:text-blue-600 font-medium transition text-lg">sales@aetherai.com</a>
+          </div>
+
+          <div>
+            <h4 class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-sm mb-6 transition-colors">Company</h4>
+            <ul class="space-y-4 text-slate-500 dark:text-slate-400 text-sm font-medium transition-colors">
+              <li><a href="#" class="hover:text-brand-primary transition">About Us</a></li>
+              <li><a href="#" class="hover:text-brand-primary transition">Privacy Policy</a></li>
+              <li><a href="#" class="hover:text-brand-primary transition">Contact us</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-sm mb-6 transition-colors">Resources</h4>
+            <ul class="space-y-4 text-slate-500 dark:text-slate-400 text-sm font-medium transition-colors">
+              <li><a href="#" class="hover:text-brand-primary transition">Case Studies</a></li>
+              <li><a href="#" class="hover:text-brand-primary transition">Blog</a></li>
+              <li><a href="#" class="hover:text-brand-primary transition">Help Docs</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-sm mb-6 transition-colors">Use Cases</h4>
+            <ul class="space-y-4 text-slate-500 dark:text-slate-400 text-sm font-medium transition-colors">
+              <li><a href="#" class="hover:text-brand-primary transition">Finance</a></li>
+              <li><a href="#" class="hover:text-brand-primary transition">Healthcare</a></li>
+              <li><a href="#" class="hover:text-brand-primary transition">Education</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-between items-center text-sm font-medium text-slate-400">
+          <p>&copy; 2026 Aether Technologies Inc. All rights reserved.</p>
+          <div class="flex space-x-4 mt-4 md:mt-0 text-xl">
+            <i class="fa-brands fa-twitter hover:text-brand-primary cursor-pointer transition"></i>
+            <i class="fa-brands fa-linkedin hover:text-brand-primary cursor-pointer transition"></i>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div> <!-- END LANDING VIEW -->
+
+
+  <!-- ============================================== -->
+  <!-- ADMIN DASHBOARD VIEW -->
+  <!-- ============================================== -->
+  <div id="dashboard-view" class="hidden min-h-screen bg-slate-50 dark:bg-slate-950 animate-fade-in transition-colors">
+    <aside class="fixed inset-y-0 left-0 w-64 bg-brand-dark border-r border-slate-800 text-white z-40 hidden md:block">
+      <a href="javascript:void(0)" onclick="window.location.reload();" class="h-20 flex items-center px-6 border-b border-slate-800 cursor-pointer">
+        <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center text-white font-bold text-xl mr-2">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <span class="text-xl font-black tracking-tight text-white">Aether Admin</span>
+      </a>
+      
+      <div class="p-4 space-y-2 mt-4">
+        <button onclick="switchDashboardTab('overview')" id="nav-overview" class="w-full flex items-center space-x-3 px-4 py-3 bg-brand-primary/20 text-brand-primary rounded-xl font-bold transition">
+          <i class="fa-solid fa-chart-line w-5"></i> <span>Overview</span>
+        </button>
+        <button onclick="switchDashboardTab('settings')" id="nav-settings" class="w-full flex items-center space-x-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl font-semibold transition">
+          <i class="fa-solid fa-gear w-5"></i> <span>Agent Settings</span>
+        </button>
+      </div>
+      <div class="absolute bottom-4 left-4 right-4">
+        <button onclick="closeDashboard()" class="w-full flex items-center space-x-3 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl font-semibold transition">
+          <i class="fa-solid fa-arrow-right-from-bracket w-5"></i> <span>Log Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="md:ml-64 flex-1 overflow-x-hidden">
+      <!-- DASHBOARD HEADER -->
+      <header class="h-20 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30 transition-colors">
+        <h2 id="dash-header-title" class="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">Dashboard Overview</h2>
+        
+        <div class="flex items-center space-x-3 sm:space-x-4 border-l border-gray-200 dark:border-slate-700 pl-4 sm:pl-6">
+          <button onclick="closeDashboard()" class="flex items-center space-x-2 text-sm font-bold text-red-500 hover:text-white hover:bg-red-500 transition bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg border border-red-100 dark:border-red-800">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span class="hidden sm:block">Log Out</span>
+          </button>
+          <button onclick="toggleTheme()" class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 transition">
+            <i id="dash-theme-icon" class="fa-solid fa-moon"></i>
+          </button>
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300"><i class="fa-solid fa-user"></i></div>
+            <div class="hidden md:block text-sm"><p id="admin-user-email" class="font-bold text-slate-800 dark:text-white leading-none">Admin User</p></div>
+          </div>
+        </div>
+      </header>
+
+      <div class="p-4 sm:p-8 max-w-7xl mx-auto">
+        <div id="tab-overview" class="block animate-fade-in">
+          <div class="bg-gradient-to-r from-brand-primary to-brand-accent rounded-2xl p-6 text-white mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center shadow-lg shadow-cyan-500/20 gap-4 sm:gap-0">
+            <div>
+              <h3 class="text-2xl font-bold mb-1">Welcome back! 👋</h3>
+              <p class="text-cyan-50 text-sm">Your AI agent handled 432 queries successfully this week.</p>
+            </div>
+            <button onclick="window.print()" class="bg-white/20 hover:bg-white/30 text-white text-sm font-bold px-4 py-2 rounded-lg transition border border-white/20 flex items-center">
+              <i class="fa-solid fa-download mr-2"></i> Export Report
+            </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm transition-colors"><p class="text-sm text-slate-500 dark:text-slate-400 font-semibold">Total Conversations</p><h4 class="text-3xl font-black text-slate-800 dark:text-white mt-1">1,248</h4></div>
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm transition-colors"><p class="text-sm text-slate-500 dark:text-slate-400 font-semibold">AI Resolution Rate</p><h4 class="text-3xl font-black text-slate-800 dark:text-white mt-1">87.4%</h4></div>
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm transition-colors"><p class="text-sm text-slate-500 dark:text-slate-400 font-semibold">Avg. Resolution Time</p><h4 class="text-3xl font-black text-slate-800 dark:text-white mt-1">45s</h4></div>
+          </div>
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
+            <h3 class="font-bold text-slate-800 dark:text-white mb-6">Traffic vs Resolution (Past 7 Days)</h3>
+            <div class="w-full overflow-x-auto"><canvas id="analyticsChart" height="100"></canvas></div>
+          </div>
+        </div>
+
+        <div id="tab-settings" class="hidden animate-fade-in">
+          <div class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm max-w-2xl transition-colors">
+            <h3 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">Bot Customization</h3>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Change how your AI agent appears to your customers on the landing page.</p>
+            <div class="space-y-6">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Primary Bot Color (Hex)</label>
+                <div class="flex items-center space-x-3">
+                  <input type="color" id="bot-color-picker" value="#0ea5e9" class="w-12 h-12 rounded cursor-pointer border-0 p-0">
+                  <input type="text" id="bot-color-text" value="#0ea5e9" class="bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-4 py-2 font-mono text-sm text-slate-700 dark:text-slate-300 w-32 outline-none transition-colors" readonly>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Initial Welcome Message</label>
+                <textarea id="bot-welcome-msg" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm dark:text-white outline-none transition-colors">Hi there! 👋 I'm Aether's AI assistant. Type below or click a quick question!</textarea>
+              </div>
+              <div class="pt-4 border-t border-gray-100 dark:border-slate-700">
+                <button onclick="saveBotSettings()" class="w-full sm:w-auto btn-pop bg-brand-primary text-white font-bold px-8 py-3 rounded-xl transition shadow-lg">Save & Apply Changes</button>
+                <p id="save-success-msg" class="text-green-500 text-sm font-bold mt-3 hidden"><i class="fa-solid fa-check mr-1"></i> Changes applied to your live website!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- GUIDED CHATBOT WIDGET (WITH PRESET BUTTONS + GEMINI INPUT) -->
+  <div class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] flex items-end justify-end flex-col group">
+    <button id="chat-widget-btn" onclick="toggleChat()" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full text-white font-bold shadow-[0_15px_30px_rgba(14,165,233,0.4)] flex items-center justify-center text-xl sm:text-2xl transition-transform hover:scale-110" style="background-color: #0ea5e9;">
+      <i class="fa-solid fa-robot"></i>
+    </button>
+    
+    <div id="chat-panel" class="hidden absolute bottom-16 sm:bottom-20 right-0 w-[calc(100vw-2rem)] sm:w-[400px] h-[540px] max-h-[75vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 flex-col overflow-hidden transition-all origin-bottom-right">
+      <div id="chat-widget-header" class="p-3 sm:p-4 flex justify-between items-center text-white" style="background-color: #0ea5e9;">
+        <div class="flex items-center space-x-3">
+          <div class="relative">
+            <div id="chat-widget-icon" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-base sm:text-lg bg-white/20"><i class="fa-solid fa-robot"></i></div>
+            <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-white rounded-full"></div>
+          </div>
+          <div><h3 class="font-bold text-sm">Aether AI Assistant</h3><p class="text-[10px] text-white/80">Powered by Gemini</p></div>
+        </div>
+        <button onclick="toggleChat()" class="w-8 h-8 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div id="chat-messages" class="flex-1 bg-slate-50 dark:bg-slate-800 p-4 overflow-y-auto flex flex-col space-y-3 transition-colors"></div>
+
+      <!-- PRESET BUTTONS + TEXT INPUT BOX -->
+      <div class="bg-white dark:bg-slate-900 p-3 border-t border-gray-100 dark:border-slate-700 transition-colors">
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 px-1">Quick Questions:</p>
+        <div class="flex flex-wrap gap-1.5 mb-3 max-h-24 overflow-y-auto">
+          <button onclick="sendCustomMessage('What is your pricing?')" class="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-brand-primary hover:text-white text-slate-700 dark:text-slate-300 font-semibold px-2.5 py-1.5 rounded-lg transition border border-gray-200 dark:border-slate-700">💰 Pricing?</button>
+          <button onclick="sendCustomMessage('What are key features?')" class="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-brand-primary hover:text-white text-slate-700 dark:text-slate-300 font-semibold px-2.5 py-1.5 rounded-lg transition border border-gray-200 dark:border-slate-700">🚀 Features?</button>
+          <button onclick="sendCustomMessage('How fast is setup?')" class="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-brand-primary hover:text-white text-slate-700 dark:text-slate-300 font-semibold px-2.5 py-1.5 rounded-lg transition border border-gray-200 dark:border-slate-700">⚡ Setup Time?</button>
+          <button onclick="sendCustomMessage('Talk to human sales')" class="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-brand-primary hover:text-white text-slate-700 dark:text-slate-300 font-semibold px-2.5 py-1.5 rounded-lg transition border border-gray-200 dark:border-slate-700">🤝 Talk to Sales</button>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <input type="text" id="chat-input" placeholder="Type a message to AI..." class="flex-1 bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none dark:text-white" onkeypress="if(event.key === 'Enter') sendCustomMessage()">
+          <button onclick="sendCustomMessage()" class="w-10 h-10 rounded-lg bg-brand-primary text-white flex items-center justify-center hover:bg-cyan-600 transition"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/pricing.js"></script>
+  <script src="js/chatbot.js"></script>
+  <script src="js/slider.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
